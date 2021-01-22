@@ -50,7 +50,8 @@ def train_and_evaluate(batch_size, epochs, job_dir, output_path):
 
     # Build the model
     model = _build_model()
-
+    # TODO: compile the model
+    
     # Train the model
 
     # Evaluate the model
@@ -77,4 +78,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
