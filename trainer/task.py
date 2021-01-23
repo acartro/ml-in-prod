@@ -1,3 +1,4 @@
+
 """A simple main file to showcase the template."""
 
 import argparse
@@ -13,7 +14,11 @@ from tensorflow.keras import metrics
 from tensorflow.keras import utils
 
 
+LOGGER = logging.getLogger()
+
+
 def _download_data():
+    LOGGER.info("Downloading data...")
     train, test = datasets.mnist.load_data()
     x_train, y_train = train
     x_test, y_test = test
@@ -21,6 +26,7 @@ def _download_data():
 
 
 def _preprocess_data(x, y):
+    LOGGER.info("Transforming data")
     x = x / 255.0
     y = utils.to_categorical(y)
     return x,y
@@ -40,7 +46,6 @@ def _build_model():
 
 
 def train_and_evaluate(batch_size, epochs, job_dir, output_path):
-
     # Download the data
     x_train, y_train, x_test, y_test = _download_data()
 
@@ -50,21 +55,27 @@ def train_and_evaluate(batch_size, epochs, job_dir, output_path):
 
     # Build the model
     model = _build_model()
-    # TODO: compile the model
-    
+    model.compile(loss=losses.categorical_crossentropy,
+                  optimizer=optimizers.Adam(),
+                  metrics=[metrics.categorical_accuracy])
+
     # Train the model
+    model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size)
 
     # Evaluate the model
-
-    pass
-
+    loss_value, accuracy = model.evaluate(x_test, y_test)
+    LOGGER.info("  *** LOSS VALUE:  %f     ACCURACY: %.4f" % (loss_value, accuracy))
 
 def main():
     """Entry point for your module."""
+    # argparse se utiliza para entrar los argumentos 
     parser = argparse.ArgumentParser()
+    # hiperparametros que vamos a optimizar (batch and epochs)
     parser.add_argument('--batch-size', type=int, help='Batch size for the training')
     parser.add_argument('--epochs', type=int, help='Number of epochs for the training')
+    # directorio donde almacenara los logs y otras cosas
     parser.add_argument('--job-dir', default=None, required=False, help='Option for AI Platform')
+    # directorio donde se almacena el modelo 
     parser.add_argument('--model-output-path', help='Path to write the SaveModel format')
 
     args = parser.parse_args()
