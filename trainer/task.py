@@ -63,8 +63,8 @@ def train_and_evaluate(batch_size, epochs, job_dir, output_path):
 
     # Train the model
     # Callback para tener visibilidad de los estados internos y las estadísticas del modelo durante el entrenamiento
-    
-    logdir = os.path.join(job_dir, "logs/scalars" + time.strftime("%Y%m%d-%H%M%S"))
+
+    logdir = os.path.join(job_dir, "logs/scalars/" + time.strftime("%Y%m%d-%H%M%S"))
     tb_callback = callbacks.TensorBoard(log_dir=logdir)
     model.fit(x_train, y_train, epochs=epochs, 
         batch_size=batch_size, 
