@@ -63,7 +63,7 @@ def train_and_evaluate(batch_size, epochs, job_dir, output_path):
 
     # Train the model
     # Callback para tener visibilidad de los estados internos y las estadísticas del modelo durante el entrenamiento
-    # FIXME: scalar graphs not shown in TensordBoard. 'train' added to the path somehow?
+    
     logdir = os.path.join(job_dir, "logs/scalars" + time.strftime("%Y%m%d-%H%M%S"))
     tb_callback = callbacks.TensorBoard(log_dir=logdir)
     model.fit(x_train, y_train, epochs=epochs, 
