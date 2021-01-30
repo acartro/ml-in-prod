@@ -49,7 +49,7 @@ def _build_model():
     return m
 
 
-def train_and_evaluate(batch_size, epochs, job_dir, output_path):
+def train_and_evaluate(batch_size, epochs, job_dir, output_path,is_hypertune):
     # Download the data
     x_train, y_train, x_test, y_test = _download_data()
 
@@ -76,14 +76,21 @@ def train_and_evaluate(batch_size, epochs, job_dir, output_path):
     loss_value, accuracy = model.evaluate(x_test, y_test)
     LOGGER.info("  *** LOSS VALUE:  %f     ACCURACY: %.4f" % (loss_value, accuracy))
 
-    # Save model in TF SavedModel Format
-    model_dir = os.path.join(output_path, VERSION)
-    models.save_model(model, model_dir, save_format='tf')
+    # Save model in TF SavedModel Format (formato binario)
+    # TERMINAR DE PONER PQ LO ELIMINAMOS
+    # model_dir = os.path.join(output_path, VERSION)
+    # models.save_model(model, model_dir, save_format='tf')
+
+    if not is_hypertune:
+        model_dir = os.path.join(output_path, VERSION)
+        models.save_model(model, model_dir, save_format='tf')
 
 def main():
     """Entry point for your module."""
     # argparse se utiliza para entrar los argumentos 
     parser = argparse.ArgumentParser()
+    # AGREGAR EL PQ
+    parser.add_argument('--hypertune', action='store_true', help='This is a hypertuning job')
     # hiperparametros que vamos a optimizar (batch and epochs)
     parser.add_argument('--batch-size', type=int, help='Batch size for the training')
     parser.add_argument('--epochs', type=int, help='Number of epochs for the training')
@@ -94,6 +101,7 @@ def main():
 
     args = parser.parse_args()
 
+    is_hypertune = args.hypertune
     batch_size = args.batch_size
     epochs = args.epochs
     job_dir = args.job_dir
