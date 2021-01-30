@@ -6,6 +6,8 @@ import logging.config
 import os
 import time
 
+import tensorflow as tf
+
 from tensorflow.keras import datasets
 from tensorflow.keras import models
 from tensorflow.keras import layers
@@ -80,6 +82,15 @@ def train_and_evaluate(batch_size, epochs, job_dir, output_path,is_hypertune):
     # TERMINAR DE PONER PQ LO ELIMINAMOS
     # model_dir = os.path.join(output_path, VERSION)
     # models.save_model(model, model_dir, save_format='tf')
+
+    # Communicate the results of the evaluation of the model
+    if is_hypertune:
+        metric_tag = 'accuracy_live_class'
+        eval_path = os.path.join(job_dir, metric_tag)
+        writer = tf.summary.create_file_writer()
+        with writer.as_default():
+            tf.summary.scalar(metric_tag, accuracy, step=epochs)
+        writer.flush()
 
     if not is_hypertune:
         model_dir = os.path.join(output_path, VERSION)
