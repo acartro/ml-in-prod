@@ -5,6 +5,7 @@ import argparse
 import logging.config
 import os
 import time
+import sys
 
 import tensorflow as tf
 
@@ -31,14 +32,16 @@ def _download_data():
     return x_train, y_train, x_test, y_test
 
 
-def _preprocess_data(x, y):
+def _preprocess_data(x, y, needs_reshape):
     LOGGER.info("Transforming data")
     x = x / 255.0
+    if needs_reshape:
+        x = x.reshape(-1, 28, 28, 1)
     y = utils.to_categorical(y)
     return x,y
 
 
-def _build_model():
+def _build_model_dense():
     m = models.Sequential()
 
     m.add(layers.Input((28,28), name='my_input_layer'))
@@ -50,17 +53,42 @@ def _build_model():
 
     return m
 
+def _build_model_cnn():
+    m = models.Sequential()
 
-def train_and_evaluate(batch_size, epochs, job_dir, output_path,is_hypertune):
+    m.add(layers.Input((28, 28, 1), name='my_input_layer'))
+    m.add(layers.Conv2D(32, (3, 3), activation=activations.relu))
+    m.add(layers.MaxPooling2D((2, 2)))
+    m.add(layers.Conv2D(16, (3, 3), activation=activations.relu))
+    m.add(layers.MaxPooling2D((2, 2)))
+    m.add(layers.Conv2D(8, (3, 3), activation=activations.relu))
+    m.add(layers.MaxPooling2D((2, 2)))
+    m.add(layers.Flatten())
+    m.add(layers.Dense(10, activation=activations.softmax))
+
+    return m
+
+def train_and_evaluate(batch_size, epochs, job_dir, output_path,is_hypertune, model_type):
     # Download the data
     x_train, y_train, x_test, y_test = _download_data()
 
+    needs_reshape = False
+    # Build the model
+    if model_type == 'dense':
+        model = _build_model_dense()
+        needs_reshape = False
+    elif model_type == 'cnn':
+        model = _build_model_cnn()
+        needs_reshape = True
+    else:
+        LOGGER.error("Unknown model type %s" % model_type)
+        sys.exit(1)
+
     # Preprocess the data
-    x_train, y_train = _preprocess_data(x_train, y_train)
-    x_test, y_test = _preprocess_data(x_test, y_test)
+    x_train, y_train = _preprocess_data(x_train, y_train, needs_reshape)
+    x_test, y_test = _preprocess_data(x_test, y_test, needs_reshape)
 
     # Build the model
-    model = _build_model()
     model.compile(loss=losses.categorical_crossentropy,
                   optimizer=optimizers.Adam(),
                   metrics=[metrics.categorical_accuracy])
@@ -110,6 +138,7 @@ def main():
     parser.add_argument('--job-dir', default=None, required=False, help='Option for AI Platform')
     # directorio donde se almacena el modelo 
     parser.add_argument('--model-output-path', help='Path to write the SaveModel format')
+    parser.add_argument('--model-type', help='Type of model to train', default='dense')
 
     args = parser.parse_args()
 
@@ -118,8 +147,17 @@ def main():
     epochs = args.epochs
     job_dir = args.job_dir
     output_path = args.model_output_path
+    model_type = args.model_type
 
-    train_and_evaluate(batch_size, epochs, job_dir, output_path, is_hypertune)
+    if not model_type in ['dense', 'cnn']:
+        print('Model type must be dense or cnn')
+        sys.exit(1)
+
+    if (not is_hypertune) and output_path is None:
+        print('Please set --model-output-path')
+        sys.exit(1)
+    
+    train_and_evaluate(batch_size, epochs, job_dir, output_path, is_hypertune, model_type)
 
 if __name__ == "__main__":
     main()
