@@ -87,11 +87,12 @@ def train_and_evaluate(batch_size, epochs, job_dir, output_path,is_hypertune):
     if is_hypertune:
         metric_tag = 'accuracy_live_class'
         eval_path = os.path.join(job_dir, metric_tag)
-        writer = tf.summary.create_file_writer()
+        writer = tf.summary.create_file_writer(eval_path)
         with writer.as_default():
             tf.summary.scalar(metric_tag, accuracy, step=epochs)
         writer.flush()
 
+    # Save model in TF SavedModel Format
     if not is_hypertune:
         model_dir = os.path.join(output_path, VERSION)
         models.save_model(model, model_dir, save_format='tf')
@@ -118,7 +119,7 @@ def main():
     job_dir = args.job_dir
     output_path = args.model_output_path
 
-    train_and_evaluate(batch_size, epochs, job_dir, output_path)
+    train_and_evaluate(batch_size, epochs, job_dir, output_path, is_hypertune)
 
 if __name__ == "__main__":
     main()
